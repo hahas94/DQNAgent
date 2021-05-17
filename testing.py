@@ -23,7 +23,7 @@ def training(env):
 
 
 def evaluating(env):
-    path = f'/Users/haradys/Documents/Data_Science_Master/RL/Project/models/{env}_best_new.pt'
+    path = f'/Users/haradys/Documents/Data_Science_Master/RL/Project/models/{env}_best.pt'
     n_eval_episodes = 10
     render = True
     save_video = False
@@ -48,10 +48,10 @@ def evaluating(env):
 
 if __name__ == "__main__":
     #env = 'CartPole-v0'
-    print('Start')
     env = 'Pong-v0'
+    print('>>> Start:')
     training(env)
-    print('End')
+    print('>>> End..')
     #evaluating(env)
 
     '''

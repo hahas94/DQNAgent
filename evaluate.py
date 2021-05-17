@@ -7,7 +7,7 @@ import torch.nn as nn
 from time import sleep
 import config
 from utils import preprocess
-
+#dummy comment
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 '''
 parser = argparse.ArgumentParser()
@@ -31,9 +31,9 @@ ENV_CONFIGS = {
 def evaluate_policy(dqn, env, env_config, env_name, n_episodes, render=False, verbose=False):
     """Runs {n_episodes} episodes to evaluate current policy."""
     total_return = 0
-    if env_name == 'Pong-v0':
-        env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True,
-                                              frame_skip=1, noop_max=30)
+    #if env_name == 'Pong-v0':
+    #    env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True,
+    #                                          frame_skip=1, noop_max=30)
 
     for i in range(n_episodes):
         obs = preprocess(env.reset(), env=env_name).unsqueeze(0)

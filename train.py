@@ -37,7 +37,8 @@ def plotting(env_name, n_episodes, mean_return):
     ax.set_xlim(left=1, right=n_episodes)
     x, y = zip(*mean_return)
     ax.scatter(x, y, color='blue')
-    plt.savefig(f'plots/{name}.png')
+    path = '/content/drive/MyDrive/Colab_Notebooks/Project/plots'
+    plt.savefig(f'{path}/{name}.png')
     plt.show()
 
 
@@ -47,18 +48,19 @@ def train(env):
     # Initialize environment and config.
     env_config = ENV_CONFIGS[env]
     env_name = env_config['env_name']
-
-    if env_name == 'CartPole-v0':
-        env = gym.make(env)
-    else:
-        env = gym.make(env)
+    env = gym.make(env)
+    
+    if env_name != 'CartPole-v0':
         env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True,
                                               frame_skip=1, noop_max=30)
 
     # Initialize deep Q-networks.
+    #path = '/content/drive/MyDrive/Colab_Notebooks/Project/models/Pong-v0_best.pt'
+    #dqn = torch.load(path, map_location=torch.device('cuda'))
+    #dqn.to(device).eval()
     dqn = DQN(env_config=env_config).to(device)
     # TODO: Create and initialize target Q-network.
-    target_dqn = copy.deepcopy(dqn)
+    target_dqn = copy.deepcopy(dqn).to(device)
 
     # Create replay memory.
     memory = ReplayMemory(env_config['memory_size'])
@@ -69,13 +71,14 @@ def train(env):
     # Keep track of best evaluation mean return achieved so far.
     best_mean_return = -float("Inf")
 
+    n_episodes = env_config['n_episodes']
     steps = 0  # number of steps taken during the entire training
-    evaluate_freq = 20  # How often to run evaluation
-    evaluation_episodes = 5  # Number of evaluation episodes
+    evaluate_freq = 25  # How often to run evaluation
+    evaluation_episodes = 4  # Number of evaluation episodes
     mean_return_train = []  # list that will contain mean return for each evaluation phase
     k = 4  # take a new action in every kth frame instead of every frame
 
-    for episode in range(env_config['n_episodes']):
+    for episode in range(n_episodes):
         done = False
 
         obs = preprocess(env.reset(), env=env_name).unsqueeze(0)  # size = (1,84,84) for Pong
@@ -106,18 +109,17 @@ def train(env):
                 if not done:
                     obs = next_obs
 
+            # pong
             else:
-                if steps % k == 0:
-                    # size = (1,4,84,84)
-                    action = dqn.act(obs_stack.unsqueeze(0)).item()
-                next_obs, reward, done, info = env.step(action)
-                next_obs_stack = preprocess(next_obs, env=env_name).unsqueeze(0)
-                next_obs_stack = torch.cat((next_obs_stack, obs_stack[1:, :, ...]), dim=0).to(device)
-                memory.push(obs_stack.unsqueeze(0), action, next_obs_stack.unsqueeze(0), reward, 1-int(done))
+              if steps % k == 0:
+                action = dqn.act(obs_stack.unsqueeze(0)).item()
+              next_obs, reward, done, info = env.step(action)              
+              next_obs_stack = preprocess(next_obs, env=env_name).unsqueeze(0)
+              next_obs_stack = torch.cat((obs_stack[1:, :, ...], next_obs_stack), dim=0).to(device)
+              memory.push(obs_stack.unsqueeze(0), action, next_obs_stack.unsqueeze(0), reward, 1-int(done))
 
-                if not done:
-                    obs = next_obs
-                    obs_stack = next_obs_stack
+              if not done:
+                obs_stack = next_obs_stack
 
             steps += 1  # increment steps
 
@@ -132,7 +134,7 @@ def train(env):
                 target_dqn = copy.deepcopy(dqn)
 
         # Evaluate the current agent.
-        if episode%evaluate_freq == 0:
+        if episode % evaluate_freq == 0:
             mean_return = evaluate_policy(dqn=dqn, env=env, env_config=env_config, env_name=env_name,
                                           n_episodes=evaluation_episodes, render=False)
             mean_return_train.append((episode, mean_return))
@@ -143,7 +145,8 @@ def train(env):
                 best_mean_return = mean_return
 
                 print('Best performance so far! Saving model.')
-                torch.save(dqn, f'models/{env_name}_best.pt')
+                path = '/content/drive/MyDrive/Colab_Notebooks/Project/models'
+                torch.save(dqn, f'{path}/{env_name}_best_new.pt')
         
     # plotting the whole training
     print(f'Best performance in final step! {best_mean_return}')
