@@ -15,17 +15,6 @@ n_actions: The number of actions can easily be accessed with env.action_space.n,
     some manual engineering to account for the fact that Pong has duplicate actions.
 """
 
-'''
-Hyperparameter tuning results:
-    - Doubling batch_size and memory size: quite similar results to default parameters
-    - Updating target model every 50 steps instead of 100: results are much worse than default
-    - gamma = 0.99: again, terrible results compared to default
-    - gamma = 0.9: slightly better results
-    - eps_end = 0.1: again, slightly better results
-    - anneal_length = 10e6: terrible results
-    -  anneal_length = 10e2: not so good results
-    - doubling memory and batch size, gamma = 0.9, eps_end = 0.1: very good results
-'''
 
 # Hyperparameters for CartPole-v0
 CartPole = {
@@ -42,19 +31,19 @@ CartPole = {
     'anneal_length': 10 ** 4,
     'n_actions': 2
 }
-# n_eps:10000, update_target: 1000, train_freq:4
+
 # Hyperparameters for all Atari games, including Pong
 Pong = {
     'env_name': 'Pong-v0',
     'obs_stack_size': 4,
-    'memory_size': 10000,
-    'n_episodes': 10000,
+    'memory_size': 100,
+    'n_episodes': 10,
     'batch_size': 32,
-    'target_update_frequency': 1000,
-    'train_frequency': 4,
+    'target_update_frequency': 2,
+    'train_frequency': 1,
     'gamma': 0.99,
     'lr': 0.0001,
-    'eps_start': 1.0,
+    'eps_start': 0.99,
     'eps_end': 0.01,
     'anneal_length': 10 ** 6,
     'n_actions': 2

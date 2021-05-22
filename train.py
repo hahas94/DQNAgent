@@ -1,9 +1,13 @@
+"""
+    In this file we define the training of the agent, and a function for plotting the
+    mean rewards per episode.
+"""
+
 import argparse
 import copy
 
 import gym
 import torch
-import torch.nn as nn
 import matplotlib.pyplot as plt
 
 from config import CartPole, Pong
@@ -25,42 +29,41 @@ ENV_CONFIGS = {
 }
 
 
-def plotting(env_name, n_episodes, mean_return):
+def plotting(env_name, n_episodes, mean_return, show=False):
     """Creating a plot of the mean return for each evaluation step
         env_name: name of environment
         n_episodes: number of episodes
         mean_return: list of the mean returns"""
 
     fig, ax = plt.subplots(figsize=(8, 6))
-    name = env_name
+    name = f'{env_name}'
     ax.set(xlabel='Episode', ylabel='Mean return', title=f'Mean return of evaluation for {name}')
     ax.set_xlim(left=1, right=n_episodes)
     x, y = zip(*mean_return)
     ax.scatter(x, y, color='blue')
     path = '/content/drive/MyDrive/Colab_Notebooks/Project/plots'
     plt.savefig(f'{path}/{name}.png')
-    plt.show()
+    if show:
+        plt.show()
 
-
+# Ex.
 # env: 'CartPole-v0'
 # env: 'Pong-v0'
+
+
 def train(env):
     # Initialize environment and config.
     env_config = ENV_CONFIGS[env]
     env_name = env_config['env_name']
     env = gym.make(env)
-    
+
     if env_name != 'CartPole-v0':
-        env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True,
-                                              frame_skip=1, noop_max=30)
+        env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True, frame_skip=1, noop_max=30)
 
     # Initialize deep Q-networks.
-    #path = '/content/drive/MyDrive/Colab_Notebooks/Project/models/Pong-v0_best.pt'
-    #dqn = torch.load(path, map_location=torch.device('cuda'))
-    #dqn.to(device).eval()
     dqn = DQN(env_config=env_config).to(device)
     # TODO: Create and initialize target Q-network.
-    target_dqn = copy.deepcopy(dqn).to(device)
+    target_dqn = copy.deepcopy(dqn).to(device)  # copy the dqn parameters using deepcopy
 
     # Create replay memory.
     memory = ReplayMemory(env_config['memory_size'])
@@ -86,7 +89,7 @@ def train(env):
         # creating a stack of 'obs_stack_size' observations from obs
         if env_name != 'CartPole-v0':
             obs_stack = torch.cat(dqn.obs_stack_size * [obs]).to(device)  # size = (4,84,84)
-        
+
         while not done:
             dqn.reduce_epsilon()  # method that reduces epsilon automatically if needed
 
@@ -111,15 +114,16 @@ def train(env):
 
             # pong
             else:
-              if steps % k == 0:
-                action = dqn.act(obs_stack.unsqueeze(0)).item()
-              next_obs, reward, done, info = env.step(action)              
-              next_obs_stack = preprocess(next_obs, env=env_name).unsqueeze(0)
-              next_obs_stack = torch.cat((obs_stack[1:, :, ...], next_obs_stack), dim=0).to(device)
-              memory.push(obs_stack.unsqueeze(0), action, next_obs_stack.unsqueeze(0), reward, 1-int(done))
 
-              if not done:
-                obs_stack = next_obs_stack
+                if steps % k == 0:
+                    action = dqn.act(obs_stack.unsqueeze(0)).item()
+                next_obs, reward, done, info = env.step(action)
+                next_obs_stack = preprocess(next_obs, env=env_name).unsqueeze(0)
+                next_obs_stack = torch.cat((obs_stack[1:, :, ...], next_obs_stack), dim=0).to(device)
+                memory.push(obs_stack.unsqueeze(0), action, next_obs_stack.unsqueeze(0), reward, 1-int(done))
+
+                if not done:
+                    obs_stack = next_obs_stack
 
             steps += 1  # increment steps
 
@@ -146,11 +150,15 @@ def train(env):
 
                 print('Best performance so far! Saving model.')
                 path = '/content/drive/MyDrive/Colab_Notebooks/Project/models'
-                torch.save(dqn, f'{path}/{env_name}_best_new.pt')
-        
+                torch.save(dqn, f'{path}/{env_name}_best_train2.pt')
+
+                # each time a best model is found, a plot is made.
+                plotting(env_name=env_name, n_episodes=env_config['n_episodes'], mean_return=mean_return_train,
+                         show=False)
+
     # plotting the whole training
     print(f'Best performance in final step! {best_mean_return}')
-    plotting(env_name=env_name, n_episodes=env_config['n_episodes'], mean_return=mean_return_train)
+    plotting(env_name=env_name, n_episodes=env_config['n_episodes'], mean_return=mean_return_train, show=True)
 
     # Close environment after training is completed.
     env.close()

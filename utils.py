@@ -1,6 +1,9 @@
-import numpy as np
-import torch
+"""
+ This file contains one function that takes an environment and state as input, process the state
+ and returns a tensor as output.
+"""
 
+import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

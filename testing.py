@@ -1,16 +1,11 @@
 import torch
-import numpy as np
-import random
 import gym
-import dqn
 from config import CartPole, Pong
 from train import train
 from evaluate import evaluate_policy
 import os
 
-from utils import preprocess
-
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # needed locally
 
 ENV_CONFIGS = {
     'CartPole-v0': CartPole,
@@ -19,10 +14,18 @@ ENV_CONFIGS = {
 
 
 def training(env):
+    """
+    function that is used to call the train() function inside train.py
+    Parameter 'env' is the environment.
+    """
     train(env)
 
 
 def evaluating(env):
+    """
+    This function is written instead of the main() function inside evaluate.py
+    path variable needs to be defined.
+    """
     path = f'/Users/haradys/Documents/Data_Science_Master/RL/Project/models/{env}_best.pt'
     n_eval_episodes = 10
     render = True
@@ -47,45 +50,14 @@ def evaluating(env):
 
 
 if __name__ == "__main__":
+    """
+    In order to run this main, either 'Pong-v0' or 'CartPole-v0' needs to be uncommented,
+    and either training or evaluating(with rendering) needs to be uncommented.
+    """
+
     #env = 'CartPole-v0'
     env = 'Pong-v0'
-    print('>>> Start:')
+    print('Start')
     training(env)
-    print('>>> End..')
+    print('End')
     #evaluating(env)
-
-    '''
-    network = dqn.DQN(Pong)
-    env = gym.make('Pong-v0')
-    env = gym.wrappers.AtariPreprocessing(env, screen_size=84, grayscale_obs=True,
-                                          frame_skip=1, noop_max=30)
-    obs = env.reset()
-    n_obs = env.reset()
-    print('shape of image', obs.shape)
-    obs = preprocess(obs, env='Pong')
-    n_obs = preprocess(n_obs, env="Pong")
-    print('size of obs', obs.shape)
-    obs = 4*[obs.unsqueeze(0)]
-    n_obs = 4*[n_obs.unsqueeze(0)]
-    obs_stack = torch.cat(obs)
-    n_obs_stack = torch.cat(n_obs)
-    print('before forward:', obs_stack.size())
-    obs_stack = obs_stack.unsqueeze(0)
-    n_obs_stack = n_obs_stack.unsqueeze(0)
-    print(f'after unsqueezing: {obs_stack.size()}, {n_obs_stack.size()}')
-    obs_stack = torch.cat((obs_stack, n_obs_stack), dim=0)
-    print(f"new dim: {obs_stack.size()}")
-    network.forward(obs_stack)
-    #print(CartPole)
-    network = dqn.DQN(CartPole)
-    #print(network)
-    b = torch.randint(low=0, high=10, size=(5,4)).float()
-    ind = torch.randint(low=0, high=4, size=(5,1))
-    #t = torch.tensor([[1,2,3,4], [11,2,7,0]]).type(torch.LongTensor)
-    print(f'b:\n{b}')
-    print(f'ind:\n{ind}')
-    print(torch.gather(b, dim=1, index=ind))
-    obs = network.forward(b)
-    #print(obs)
-    #print(torch.max(obs, dim=1))
-    '''
